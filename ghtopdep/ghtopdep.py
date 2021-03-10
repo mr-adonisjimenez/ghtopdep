@@ -167,7 +167,9 @@ def cli(url, repositories, search, table, rows, minstar, token):
     page_url = get_page_url(sess, url, destination)
 
     while True:
+        time.sleep(1)
         response = sess.get(page_url)
+
         parsed_node = HTMLParser(response.text)
         dependents = parsed_node.css(ITEM_SELECTOR)
         total_repos_count += len(dependents)
@@ -190,6 +192,7 @@ def cli(url, repositories, search, table, rows, minstar, token):
                 is_already_added = already_added(repo_url, repos)
                 if not is_already_added and repo_url != url:
                     print("adding repo ", repo_url)
+
                     repos.append({
                         "url": repo_url,
                         "stars": repo_stars_num
