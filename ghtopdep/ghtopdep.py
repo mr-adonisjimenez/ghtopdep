@@ -82,19 +82,10 @@ def readable_stars(repos):
     return repos
 
 
-def show_result(repos, total_repos_count, more_than_zero_count, destinations, table):
-    if table:
-        if repos:
-            repos = readable_stars(repos)
-            click.echo(tabulate(repos, headers="keys", tablefmt="github"))
-            click.echo("found {0} {1} others {2} are private".format(total_repos_count, destinations, destinations))
-            click.echo("found {0} {1} with more than zero star".format(more_than_zero_count, destinations))
-        else:
-            click.echo("Doesn't find any {0} that match search request".format(destinations))
-    else:
-
-        with open('output/output.json', 'w') as outfile:
-            json.dump(repos, outfile)
+def show_result(repos, total_repos_count, more_than_zero_count, destinations, number_of_files_processed):
+    print("boom")
+    with open(f'output/output-{number_of_files_processed}.json', 'w') as outfile:
+        json.dump(repos, outfile)
 
 def get_page_url(sess, url, destination):
     page_url = "{0}/network/dependents?dependent_type={1}".format(url, destination.upper())
@@ -121,13 +112,14 @@ def get_page_url(sess, url, destination):
 @click.command()
 @click.argument("url")
 @click.option("--repositories/--packages", default=True, help="Sort repositories or packages (default repositories)")
-@click.option("--table/--json", default=True, help="View mode")
 @click.option("--rows", default=10, help="Number of showing repositories (default=10)")
 @click.option("--minstar", default=5, help="Minimum number of stars (default=5)")
 @click.option("--search", help="search code at dependents (repositories/packages)")
 @click.option("--token", envvar="GHTOPDEP_TOKEN")
-def cli(url, repositories, search, table, rows, minstar, token):
+
+def cli(url, repositories, search, rows, minstar, token):
     MODE = os.environ.get("GHTOPDEP_ENV")
+    REPOS_PER_FILE_SIZE_LIMIT = 500
 
     if (search) and token:
         gh = github3.login(token=token)
@@ -166,9 +158,14 @@ def cli(url, repositories, search, table, rows, minstar, token):
 
     page_url = get_page_url(sess, url, destination)
 
+    found_repos = 0
+    number_of_files_processed = 0
+
     while True:
         time.sleep(1)
         response = sess.get(page_url)
+
+        print(page_url)
 
         parsed_node = HTMLParser(response.text)
         dependents = parsed_node.css(ITEM_SELECTOR)
@@ -191,12 +188,30 @@ def cli(url, repositories, search, table, rows, minstar, token):
                 # can be listed same package
                 is_already_added = already_added(repo_url, repos)
                 if not is_already_added and repo_url != url:
-                    print("adding repo ", repo_url)
+                    # print("adding repo ", repo_url)
+                    found_repos += 1
 
                     repos.append({
                         "url": repo_url,
                         "stars": repo_stars_num
                     })
+
+                    if found_repos >= REPOS_PER_FILE_SIZE_LIMIT:
+                        sorted_repos = sort_repos(repos, rows)
+                        repos = []
+                        number_of_files_processed += 1
+                        found_repos = 0
+
+                        show_result(
+                            sorted_repos,
+                            total_repos_count,
+                            more_than_zero_count,
+                            destinations,
+                            number_of_files_processed
+                        )
+
+                        print("JSON output placed into file!")
+
 
         node = parsed_node.css(NEXT_BUTTON_SELECTOR)
         if len(node) == 2:
@@ -215,5 +230,5 @@ def cli(url, repositories, search, table, rows, minstar, token):
             repo_path = urlparse(repo["url"]).path[1:]
             for s in gh.search_code("{0} repo:{1}".format(search, repo_path)):
                 click.echo("{0} with {1} stars".format(s.html_url, repo["stars"]))
-    else:
-        show_result(sorted_repos, total_repos_count, more_than_zero_count, destinations, table)
+    elif number_of_files_processed == 0:
+        show_result(sorted_repos, total_repos_count, more_than_zero_count, destinations, number_of_files_processed)
