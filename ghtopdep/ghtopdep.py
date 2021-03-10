@@ -58,7 +58,7 @@ def already_added(repo_url, repos):
     for repo in repos:
         if repo['url'] == repo_url:
             return True
-            
+
 
 def sort_repos(repos, rows):
     sorted_repos = sorted(repos, key=lambda i: i["stars"], reverse=True)
@@ -128,9 +128,6 @@ def get_page_url(sess, url, destination):
 @click.option("--token", envvar="GHTOPDEP_TOKEN")
 def cli(url, repositories, search, table, rows, minstar, token):
     MODE = os.environ.get("GHTOPDEP_ENV")
-    BASE_URL = 'https://437w61gcj1.execute-api.us-west-2.amazonaws.com/api'
-    if MODE == "development":
-        BASE_URL = 'http://127.0.0.1:8080'
 
     if (search) and token:
         gh = github3.login(token=token)
