@@ -3,3 +3,4 @@ example
 ghtopdep.egg-info
 .ghtopdep_cache/
 dist/
+ghtopdep/__pycache__/
