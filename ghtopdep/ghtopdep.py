@@ -116,8 +116,9 @@ def get_page_url(sess, url, destination):
 @click.option("--minstar", default=5, help="Minimum number of stars (default=5)")
 @click.option("--search", help="search code at dependents (repositories/packages)")
 @click.option("--token", envvar="GHTOPDEP_TOKEN")
+@click.option("--max_repos_retrieved", default=5000, help="Minimum number of repos retrieved (default=5000)")
 
-def cli(url, repositories, search, rows, minstar, token):
+def cli(url, repositories, search, rows, minstar, token, max_repos_retrieved):
     MODE = os.environ.get("GHTOPDEP_ENV")
     REPOS_PER_FILE_SIZE_LIMIT = 500
 
@@ -159,6 +160,7 @@ def cli(url, repositories, search, rows, minstar, token):
     page_url = get_page_url(sess, url, destination)
 
     found_repos = 0
+    total_found_repos = 0
     number_of_files_processed = 0
 
     while True:
@@ -190,6 +192,7 @@ def cli(url, repositories, search, rows, minstar, token):
                 if not is_already_added and repo_url != url:
                     # print("adding repo ", repo_url)
                     found_repos += 1
+                    total_found_repos += 1
 
                     repos.append({
                         "url": repo_url,
@@ -212,6 +215,10 @@ def cli(url, repositories, search, rows, minstar, token):
 
                         print("JSON output placed into file!")
 
+
+                    if total_found_repos > max_repos_retrieved:
+                        print(f'Collected {total_found_repos} repos.')
+                        exit
 
         node = parsed_node.css(NEXT_BUTTON_SELECTOR)
         if len(node) == 2:
