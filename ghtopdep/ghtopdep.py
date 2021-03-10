@@ -1,6 +1,7 @@
 import calendar
 import json
 import os
+import time
 import sys
 import textwrap
 import datetime
@@ -57,16 +58,7 @@ def already_added(repo_url, repos):
     for repo in repos:
         if repo['url'] == repo_url:
             return True
-
-
-def fetch_description(gh, relative_url):
-    _, owner, repository = relative_url.split("/")
-    repository = gh.repository(owner, repository)
-    repo_description = " "
-    if repository.description:
-        repo_description = textwrap.shorten(repository.description, width=60, placeholder="...")
-    return repo_description
-
+            
 
 def sort_repos(repos, rows):
     sorted_repos = sorted(repos, key=lambda i: i["stars"], reverse=True)
@@ -100,8 +92,9 @@ def show_result(repos, total_repos_count, more_than_zero_count, destinations, ta
         else:
             click.echo("Doesn't find any {0} that match search request".format(destinations))
     else:
-        click.echo(json.dumps(repos))
 
+        with open('output/output.json', 'w') as outfile:
+            json.dump(repos, outfile)
 
 def get_page_url(sess, url, destination):
     page_url = "{0}/network/dependents?dependent_type={1}".format(url, destination.upper())
@@ -129,24 +122,22 @@ def get_page_url(sess, url, destination):
 @click.argument("url")
 @click.option("--repositories/--packages", default=True, help="Sort repositories or packages (default repositories)")
 @click.option("--table/--json", default=True, help="View mode")
-@click.option("--description", is_flag=True, help="Show description of packages or repositories (performs additional "
-                                                  "request per repository)")
 @click.option("--rows", default=10, help="Number of showing repositories (default=10)")
 @click.option("--minstar", default=5, help="Minimum number of stars (default=5)")
 @click.option("--search", help="search code at dependents (repositories/packages)")
 @click.option("--token", envvar="GHTOPDEP_TOKEN")
-def cli(url, repositories, search, table, rows, minstar, description, token):
+def cli(url, repositories, search, table, rows, minstar, token):
     MODE = os.environ.get("GHTOPDEP_ENV")
     BASE_URL = 'https://437w61gcj1.execute-api.us-west-2.amazonaws.com/api'
     if MODE == "development":
         BASE_URL = 'http://127.0.0.1:8080'
 
-    if (description or search) and token:
+    if (search) and token:
         gh = github3.login(token=token)
         CacheControl(gh.session,
                      cache=FileCache(CACHE_DIR),
                      heuristic=OneDayHeuristic())
-    elif (description or search) and not token:
+    elif (search) and not token:
         click.echo("Please provide token")
         sys.exit()
 
@@ -159,8 +150,11 @@ def cli(url, repositories, search, table, rows, minstar, description, token):
     repos = []
     more_than_zero_count = 0
     total_repos_count = 0
-    spinner = Halo(text="Fetching information about {0}".format(destinations), spinner="dots")
-    spinner.start()
+    # spinner = Halo(text="Fetching information about {0}".format(destinations), spinner="dots")
+    # spinner.start()
+
+
+
 
     sess = requests.session()
     retries = Retry(
@@ -198,24 +192,17 @@ def cli(url, repositories, search, table, rows, minstar, description, token):
                 # can be listed same package
                 is_already_added = already_added(repo_url, repos)
                 if not is_already_added and repo_url != url:
-                    if description:
-                        repo_description = fetch_description(gh, relative_repo_url)
-                        repos.append({
-                            "url": repo_url,
-                            "stars": repo_stars_num,
-                            "description": repo_description
-                        })
-                    else:
-                        repos.append({
-                            "url": repo_url,
-                            "stars": repo_stars_num
-                        })
+                    print("adding repo ", repo_url)
+                    repos.append({
+                        "url": repo_url,
+                        "stars": repo_stars_num
+                    })
 
         node = parsed_node.css(NEXT_BUTTON_SELECTOR)
         if len(node) == 2:
             page_url = node[1].attributes["href"]
         elif len(node) == 0 or node[0].text() == "Previous":
-            spinner.stop()
+            # spinner.stop()
             break
         elif node[0].text() == "Next":
             page_url = node[0].attributes["href"]
