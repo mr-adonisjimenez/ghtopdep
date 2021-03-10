@@ -7,3 +7,10 @@ ghtopdep.ghtopdep.cli()
 #
 #
 #    python3 runner.py https://github.com/dropbox/dropbox-sdk-js --packages
+
+
+# On my macbook laptop:
+#
+#
+#
+#    sudo python3 runner.py https://github.com/dropbox/dropbox-sdk-js --packages
