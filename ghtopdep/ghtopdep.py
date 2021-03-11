@@ -60,9 +60,9 @@ def already_added(repo_url, repos):
             return True
 
 
-def sort_repos(repos, rows):
-    sorted_repos = sorted(repos, key=lambda i: i["stars"], reverse=True)
-    return sorted_repos[:rows]
+# def sort_repos(repos, rows):
+#     sorted_repos = sorted(repos, key=lambda i: i["stars"], reverse=True)
+#     return sorted_repos[:rows]
 
 
 def humanize(num):
@@ -83,7 +83,6 @@ def readable_stars(repos):
 
 
 def show_result(repos, total_repos_count, more_than_zero_count, destinations, number_of_files_processed):
-    print("boom")
     with open(f'output/output-{number_of_files_processed}.json', 'w') as outfile:
         json.dump(repos, outfile)
 
@@ -200,7 +199,7 @@ def cli(url, repositories, search, rows, minstar, token, max_repos_retrieved):
                     })
 
                     if found_repos >= REPOS_PER_FILE_SIZE_LIMIT:
-                        sorted_repos = sort_repos(repos, rows)
+                        sorted_repos = repos
                         repos = []
                         number_of_files_processed += 1
                         found_repos = 0
@@ -230,7 +229,7 @@ def cli(url, repositories, search, rows, minstar, token, max_repos_retrieved):
             page_url = node[0].attributes["href"]
 
 
-    sorted_repos = sort_repos(repos, rows)
+    sorted_repos = repos
 
     if search:
         for repo in repos:
