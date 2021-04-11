@@ -6,7 +6,7 @@ ghtopdep.ghtopdep.cli()
 #
 #
 #
-#    python3 runner.py https://github.com/dropbox/dropbox-sdk-js --packages
+#    python3 runner.py https://github.com/jaredhanson/passport
 
 
 # On my macbook laptop:

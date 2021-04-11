@@ -60,9 +60,9 @@ def already_added(repo_url, repos):
             return True
 
 
-def sort_repos(repos, rows):
-    sorted_repos = sorted(repos, key=lambda i: i["stars"], reverse=True)
-    return sorted_repos[:rows]
+# def sort_repos(repos, rows):
+#     sorted_repos = sorted(repos, key=lambda i: i["stars"], reverse=True)
+#     return sorted_repos[:rows]
 
 
 def humanize(num):
@@ -90,7 +90,6 @@ def show_result(repos, total_repos_count, more_than_zero_count, destinations, nu
 
     with open(f'cache/{output_file_name}-{number_of_files_processed}.json', 'w') as outfile:
         outfile.write(json.dumps(results_saved_to_file))
-        # json.dump(repos, outfile)
     print("ghtopdep output file created!")
 
 def get_page_url(sess, url, destination):
@@ -123,8 +122,10 @@ def get_page_url(sess, url, destination):
 @click.option("--search", help="search code at dependents (repositories/packages)")
 @click.option("--token", envvar="GHTOPDEP_TOKEN")
 @click.option("--output_file_name", help="Name of JSON output file")
+@click.option("--max_repos_retrieved", default=5000, help="Minimum number of repos retrieved (default=5000)")
 
-def cli(url, repositories, search, rows, minstar, token, output_file_name):
+def cli(url, repositories, search, rows, minstar, token, output_file_name, max_repos_retrieved):
+
     MODE = os.environ.get("GHTOPDEP_ENV")
     REPOS_PER_FILE_SIZE_LIMIT = 5000
 
@@ -166,6 +167,7 @@ def cli(url, repositories, search, rows, minstar, token, output_file_name):
     page_url = get_page_url(sess, url, destination)
 
     found_repos = 0
+    total_found_repos = 0
     number_of_files_processed = 0
 
     while True:
@@ -197,6 +199,7 @@ def cli(url, repositories, search, rows, minstar, token, output_file_name):
                 if not is_already_added and repo_url != url:
                     # print("adding repo ", repo_url)
                     found_repos += 1
+                    total_found_repos += 1
 
                     repos.append({
                         "url": repo_url,
@@ -204,7 +207,7 @@ def cli(url, repositories, search, rows, minstar, token, output_file_name):
                     })
 
                     if found_repos >= REPOS_PER_FILE_SIZE_LIMIT:
-                        sorted_repos = sort_repos(repos, rows)
+                        sorted_repos = repos
                         repos = []
                         number_of_files_processed += 1
                         found_repos = 0
@@ -221,6 +224,10 @@ def cli(url, repositories, search, rows, minstar, token, output_file_name):
                         print("JSON output placed into file!")
 
 
+                    if total_found_repos > max_repos_retrieved:
+                        print(f'Collected {total_found_repos} repos.')
+                        exit
+
         node = parsed_node.css(NEXT_BUTTON_SELECTOR)
         if len(node) == 2:
             page_url = node[1].attributes["href"]
@@ -231,7 +238,7 @@ def cli(url, repositories, search, rows, minstar, token, output_file_name):
             page_url = node[0].attributes["href"]
 
 
-    sorted_repos = sort_repos(repos, rows)
+    sorted_repos = repos
 
     if search:
         for repo in repos:
