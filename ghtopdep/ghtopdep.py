@@ -82,10 +82,16 @@ def readable_stars(repos):
     return repos
 
 
-def show_result(repos, total_repos_count, more_than_zero_count, destinations, number_of_files_processed):
-    print("boom")
-    with open(f'output/output-{number_of_files_processed}.json', 'w') as outfile:
-        json.dump(repos, outfile)
+def show_result(repos, total_repos_count, more_than_zero_count, destinations, number_of_files_processed, output_file_name):
+    results_saved_to_file = []
+    for repo in repos:
+        repo_url = repo["url"].split("https://github.com/")[1]
+        results_saved_to_file.append(repo_url)
+
+    with open(f'cache/{output_file_name}-{number_of_files_processed}.json', 'w') as outfile:
+        outfile.write(json.dumps(results_saved_to_file))
+        # json.dump(repos, outfile)
+    print("ghtopdep output file created!")
 
 def get_page_url(sess, url, destination):
     page_url = "{0}/network/dependents?dependent_type={1}".format(url, destination.upper())
@@ -116,10 +122,11 @@ def get_page_url(sess, url, destination):
 @click.option("--minstar", default=5, help="Minimum number of stars (default=5)")
 @click.option("--search", help="search code at dependents (repositories/packages)")
 @click.option("--token", envvar="GHTOPDEP_TOKEN")
+@click.option("--output_file_name", help="Name of JSON output file")
 
-def cli(url, repositories, search, rows, minstar, token):
+def cli(url, repositories, search, rows, minstar, token, output_file_name):
     MODE = os.environ.get("GHTOPDEP_ENV")
-    REPOS_PER_FILE_SIZE_LIMIT = 500
+    REPOS_PER_FILE_SIZE_LIMIT = 5000
 
     if (search) and token:
         gh = github3.login(token=token)
@@ -207,7 +214,8 @@ def cli(url, repositories, search, rows, minstar, token):
                             total_repos_count,
                             more_than_zero_count,
                             destinations,
-                            number_of_files_processed
+                            number_of_files_processed,
+                            output_file_name
                         )
 
                         print("JSON output placed into file!")
@@ -231,4 +239,11 @@ def cli(url, repositories, search, rows, minstar, token):
             for s in gh.search_code("{0} repo:{1}".format(search, repo_path)):
                 click.echo("{0} with {1} stars".format(s.html_url, repo["stars"]))
     elif number_of_files_processed == 0:
-        show_result(sorted_repos, total_repos_count, more_than_zero_count, destinations, number_of_files_processed)
+        show_result(
+            sorted_repos,
+            total_repos_count,
+            more_than_zero_count,
+            destinations,
+            number_of_files_processed,
+            output_file_name
+        )
