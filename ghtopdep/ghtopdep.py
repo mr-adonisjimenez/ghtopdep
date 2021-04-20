@@ -122,12 +122,12 @@ def get_page_url(sess, url, destination):
 @click.option("--search", help="search code at dependents (repositories/packages)")
 @click.option("--token", envvar="GHTOPDEP_TOKEN")
 @click.option("--output_file_name", help="Name of JSON output file")
-@click.option("--max_repos_retrieved", default=5000, help="Minimum number of repos retrieved (default=5000)")
+@click.option("--max_repos_retrieved", default=50000, help="Minimum number of repos retrieved (default=50000)")
 
 def cli(url, repositories, search, rows, minstar, token, output_file_name, max_repos_retrieved):
 
     MODE = os.environ.get("GHTOPDEP_ENV")
-    REPOS_PER_FILE_SIZE_LIMIT = 5000
+    REPOS_PER_FILE_SIZE_LIMIT = 3000
 
     if (search) and token:
         gh = github3.login(token=token)
