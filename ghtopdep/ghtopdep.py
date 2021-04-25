@@ -88,7 +88,7 @@ def show_result(repos, total_repos_count, more_than_zero_count, destinations, nu
         repo_url = repo["url"].split("https://github.com/")[1]
         results_saved_to_file.append(repo_url)
 
-    with open(f'cache/{output_file_name}-{number_of_files_processed}.json', 'w') as outfile:
+    with open(f'/root/tools/ghtopdep/cache/{output_file_name}-{number_of_files_processed}.json', 'w') as outfile:
         outfile.write(json.dumps(results_saved_to_file))
     print("ghtopdep output file created!")
 
