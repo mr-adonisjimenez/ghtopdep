@@ -1,0 +1,25 @@
+name: Publish Python Package
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  publish-to-gpr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Publish package to GitHub Packages
+        uses: JRubics/poetry-publish@v2.1
+        with:
+          repository_url: "https://pypi.pkg.github.com/${{ github.repository_owner }}"
+          repository_username: __token__
+          repository_password: ${{ secrets.GITHUB_TOKEN }}
+          poetry_publish_options: "--build"
