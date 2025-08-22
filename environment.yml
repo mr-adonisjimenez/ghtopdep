@@ -1,0 +1,21 @@
+name: ghtopdep
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+    - selectolax>=0.3.33
+    - tabulate
+    - click
+    - halo
+    - cachecontrol
+    - lockfile
+    - requests
+    - github3.py
+    - appdirs
+    - pipdate
+    - better_exceptions
+    - pysnooper
+    - pytest
+    - flake8
